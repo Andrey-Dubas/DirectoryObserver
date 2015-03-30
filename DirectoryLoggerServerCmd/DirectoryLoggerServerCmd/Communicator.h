@@ -27,7 +27,7 @@ public:
 public:
 	virtual ~Communicator(void);
 	static Communicator* Instance(unsigned int port);
-	static void DeleteInstance(){_instance.reset();}
+	//static void DeleteInstance(){_instance.reset();}
 	void Notify(const NetworkMessage& message);
 	void AcceptConnection(); // async function
 private:

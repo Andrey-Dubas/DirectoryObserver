@@ -8,6 +8,7 @@
 #include <memory>
 #include <cstdlib>
 #include <vector>
+#include <conio.h>
 
 typedef std::basic_string<_TCHAR> String;
 
@@ -53,6 +54,19 @@ public:
 	{
 		WSACleanup();
 	}
+};
+
+class Socket
+{
+	SOCKET _s;
+
+private:
+	Socket& operator=(const Socket& s){}
+	Socket(const Socket& s){}
+public:
+	explicit Socket(SOCKET s): _s(s){}
+	~Socket(){closesocket(_s);}
+	SOCKET Handle() {return _s;}
 };
 
 void at_exit()
@@ -187,6 +201,18 @@ std::pair<std::string, unsigned short> GetArguments(int argc, _TCHAR* argv[])
 	return std::pair<std::string, int>(std::string(ip.begin(), ip.end()), port);
 }
 
+DWORD WINAPI KeyboardInterrupt(void*)
+{
+	char pressedKey;
+	do
+	{
+		while(!_kbhit());
+		pressedKey = getch();
+	} while('q' != pressedKey);
+
+	exit(0);
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//std::atexit(at_exit);
@@ -226,22 +252,26 @@ int _tmain(int argc, _TCHAR* argv[])
 		std::cout << "error creating socket" << std::endl;
 		return -1;
 	}
+	Socket connector(s);
 	sockaddr_in sockDetails;
 	sockDetails.sin_port = params.second;
 	sockDetails.sin_addr.S_un.S_addr = inet_addr(params.first.data());
 	sockDetails.sin_family = AF_INET;
 
-	if(0 != connect(s, (sockaddr*)&sockDetails, sizeof(sockDetails)))
+	if(0 != connect(connector.Handle(), (sockaddr*)&sockDetails, sizeof(sockDetails)))
 	{
 		std::cout << "error connecting" << std::endl;
 		return -1;
 	}
 
+	std::cout << "Press q to exit" << std::endl;
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)KeyboardInterrupt, NULL, 0, NULL);
+
 	while(1)
 	{
 		try
 		{
-			std::string message = ReceiveMessage(s);
+			std::string message = ReceiveMessage(connector.Handle());
 			std::cout << "event: " << message.data() << std::endl;
 		}
 		catch(ErrorConnectionException& ex)
@@ -255,7 +285,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		}
 	}
-	closesocket(s);
 
 	return 0;
 }

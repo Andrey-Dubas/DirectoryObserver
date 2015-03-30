@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory=""
-				CommandArguments="127.0.0.1 2025"
+				CommandArguments="127.0.0.1 2020"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
